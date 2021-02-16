@@ -11,25 +11,19 @@ import java.util.UUID;
 
 @Entity
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class Person {
+@NoArgsConstructor
+public class Car {
 
     @Id
     @GeneratedValue
     private UUID id;
-
     private String name;
 
-    private String lastName;
+    @ManyToMany(fetch = FetchType.LAZY,mappedBy = "cars")
+    private List<Person> personList = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    private List<Car> cars = new ArrayList<>();
-
-    public Person(String name, String lastName) {
+    public Car(String name) {
         this.name = name;
-        this.lastName = lastName;
     }
-
-
 }

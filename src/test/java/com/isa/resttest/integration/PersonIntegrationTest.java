@@ -1,7 +1,9 @@
 package com.isa.resttest.integration;
 
 import com.isa.resttest.dto.PersonDTO;
+import com.isa.resttest.model.Car;
 import com.isa.resttest.model.Person;
+import com.isa.resttest.repository.CarRepository;
 import com.isa.resttest.repository.PersonRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -14,8 +16,7 @@ import org.springframework.boot.web.server.LocalServerPort;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static io.restassured.RestAssured.when;
-import static io.restassured.RestAssured.with;
+import static io.restassured.RestAssured.*;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @AutoConfigureMockMvc
@@ -23,6 +24,9 @@ class PersonIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     PersonRepository personRepository;
+
+    @Autowired
+    CarRepository carRepository;
 
     @LocalServerPort
     int port;
@@ -46,7 +50,10 @@ class PersonIntegrationTest extends AbstractIntegrationTest {
     private Person savePerson(String name, String lastName) {
 
         return new Person(name, lastName);
+    }
 
+    private Car saveCar(String name) {
+        return new Car(name);
     }
 
     @Test
@@ -87,7 +94,7 @@ class PersonIntegrationTest extends AbstractIntegrationTest {
         PersonDTO[] result = response.body().as(PersonDTO[].class);
 
         List<PersonDTO> resultList = Arrays.stream(result).sorted(Comparator.comparing(PersonDTO::getName)).collect(Collectors.toList());
-        List<PersonDTO> input = toSave.stream().map(person -> new PersonDTO(person.getId(), person.getName(), person.getLastName())).sorted(Comparator.comparing(PersonDTO::getName)).collect(Collectors.toList());
+        List<PersonDTO> input = toSave.stream().map(person -> new PersonDTO(person.getId(), person.getName(), person.getLastName(),Collections.EMPTY_LIST)).sorted(Comparator.comparing(PersonDTO::getName)).collect(Collectors.toList());
 
         Assertions.assertArrayEquals(resultList.toArray(), input.toArray());
 
@@ -127,24 +134,49 @@ class PersonIntegrationTest extends AbstractIntegrationTest {
             fail(e);
         }
 
+    }
 
-/*        PersonDTO personDTO = new PersonDTO();
-        personDTO.setLastName("Kowalski");
-        personDTO.setName("Jan");
+    @Test
+    void addCarToPerson() {
 
-        Response response = with().body(personDTO)
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .when().post("/person");
+        //given
+        Person a = savePerson("Janel","A");
+        Person b = savePerson("Kanek", "B");
 
-        Assertions.assertEquals(200, response.statusCode());
+        Car car = saveCar("Ferrari");
+
+        a = personRepository.save(a);
+        b = personRepository.save(b);
+
+        car = carRepository.save(car);
+
+        //when
+        Response putA = put(String.format("/person/%s/%s", a.getId(), car.getId()));
+        Response putB = put(String.format("/person/%s/%s", b.getId(), car.getId()));
+
+        Assertions.assertEquals(200, putA.getStatusCode());
+        Assertions.assertEquals(200, putB.getStatusCode());
 
         try {
-            PersonDTO result = response.body().as(PersonDTO.class);
-            Assertions.assertEquals(personDTO.getName(), result.getName());
-            Assertions.assertEquals(personDTO.getLastName(), result.getLastName());
+
+            PersonDTO personDTOA = putA.body().as(PersonDTO.class);
+            PersonDTO personDTOB = putB.body().as(PersonDTO.class);
+
+            Assertions.assertEquals(a.getName(), personDTOA.getName());
+            //+pozostale pola
+            Assertions.assertEquals(1, personDTOA.getOwnedCars().size());
+            Assertions.assertEquals(car.getId(), personDTOA.getOwnedCars().get(0).getId());
+            //pozostałe pola
+
+            //personDTOB analogicznie
+
+
         } catch (Exception e) {
             fail(e);
-        }*/
+        }
+
+
+
     }
 
 

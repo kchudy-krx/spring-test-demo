@@ -38,4 +38,12 @@ public class PersonController {
     }
 
 
+    @PutMapping("/{personId}/{carId}")
+    PersonDTO addCar(
+            @PathVariable UUID personId,
+            @PathVariable UUID carId
+    ) {
+        return personService.addCarToPerson(personId, carId);
+    }
+
 }
