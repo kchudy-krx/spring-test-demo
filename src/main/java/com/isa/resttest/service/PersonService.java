@@ -6,6 +6,9 @@ import com.isa.resttest.repository.PersonRepository;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class PersonService {
@@ -24,6 +27,23 @@ public class PersonService {
         person = personRepository.save(person);
 
         return new PersonDTO(person.getId(), person.getName(), person.getLastName());
+
+    }
+
+
+    @Transactional
+    public List<PersonDTO> findAll() {
+
+        return personRepository.findAll()
+                .stream()
+                .map(person -> new PersonDTO(person.getId(), person.getName(), person.getLastName()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deletePerson(UUID id) {
+
+        personRepository.deleteById(id);
 
     }
 }
